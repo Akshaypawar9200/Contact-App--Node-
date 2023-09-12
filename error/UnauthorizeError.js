@@ -4,6 +4,7 @@ class UnauthorizeError extends ContactAppError{
     constructor(specifcMessage){
     super(
         "Unauthorize error",
+        "unauthorize",
         StatusCodes.UNAUTHORIZED,
         specifcMessage
     )

@@ -1,8 +1,11 @@
 const { sign } = require('cookie-signature');
+
+require('dotenv').config()
 const Contact=require('../User')
-const jwt=require('jsonwebtoken')
+const jwt=require('jsonwebtoken');
+const UnauthorizeError = require('../error/UnauthorizeError');
 class JwtAuthentication{
-    static key="RandomKey"
+    // static key=
     constructor(id,userName,isAdmin)
     {
         this.id=id;
@@ -11,12 +14,12 @@ class JwtAuthentication{
     }
     static newAuthenticate(id,userName,isAdmin){
        let  payload=new JwtAuthentication(id,userName,isAdmin)
-        let token=jwt.sign(JSON.stringify(payload),JwtAuthentication.key)
+        let token=jwt.sign(JSON.stringify(payload),process.env.JWT_SECRET_KEY)
        
         return token
     }
     static verifyToken(token){
-        let payload=jwt.verify(token,JwtAuthentication.key)
+        let payload=jwt.verify(token,process.env.JWT_SECRET_KEY)
        
         return payload
 
@@ -25,10 +28,12 @@ class JwtAuthentication{
       
         try {
      
-            const token=req.cookies.authe;
+            const token=req.cookies[process.env.AUTH_COOKIE_NAME];
+            console.log(process.env.AUTH_COOKIE_NAME);
+            console.log("tokrn");
            
             if(!token){
-                throw new Error("unauthorize")
+                throw new UnauthorizeError("invalid token")
             }
             let payload=JwtAuthentication.verifyToken(token)
             if(payload.isAdmin){
@@ -37,7 +42,7 @@ class JwtAuthentication{
     
             }
             else{
-            throw Error("unauthorized")
+            throw new UnauthorizeError("unauthorized acess")
             }
             
          } catch (error) {
@@ -49,7 +54,7 @@ class JwtAuthentication{
 
         try {
           
-            const token=req.cookies.authe;
+            const token=req.cookies[process.env.AUTH_COOKIE_NAME];
           
             if(!token){
                 throw new Error("unauthorize")
@@ -63,7 +68,7 @@ class JwtAuthentication{
     
             }
             else{
-            throw Error("unauthorized")
+            throw new UnauthorizeError("unauthorized acesss")
             }
             
          } catch (error) {

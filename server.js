@@ -2,6 +2,7 @@ const express = require('express');
 const {errorHandler}=require('./middleware/ErrorHandler')
 const User = require('./User');
 const cookieParser = require('cookie-parser')
+const bcrypt = require('bcrypt');
 
 const {
     NotFound,
@@ -9,6 +10,7 @@ const {
     UnauthorizeError
 
 } = require('./error');
+require('dotenv').config()
 const { isAdmin } = require('./middleware/JwtAuthentication');
 const JwtAuthentication = require('./middleware/JwtAuthentication');
 
@@ -25,15 +27,16 @@ mainRouter.use('/user', adminRouter)
 userRouter.use(JwtAuthentication.isUser)
 adminRouter.use(JwtAuthentication.isAdmin)
 userRouter.use('/:contactId/contactDetail',contactDetailRouter)               // /api/v1/contact-app/user          
-const login = (req, res,next) => {
+const  login = async(req, res,next) => {
     try {
         let { userName, password } = req.body;
         if (typeof userName !== "string" || typeof password !== "string") {
             throw new ValidationError("Invalid credentials");
         }
         let token = User.adminAuthentication(userName, password);
-        console.log(token);
-        res.cookie("authe", token);
+
+     
+        res.cookie(process.env.AUTH_COOKIE_NAME,await token);
         res.status(200).send("login successful")
     } catch (error) {
         next(error);
@@ -55,10 +58,10 @@ const createAdmin = (req, res,next) => {
 mainRouter.post("/createadmin", createAdmin)
 
 
-const createUser = (req, res,next) => {
+const createUser =async (req, res,next) => {
     try {
         const { fname, lname, isAdmin, userName, password } = req.body;
-        let createUsers = User.createUser(fname, lname, isAdmin, userName, password);
+        let createUsers = await User.createUser(fname, lname, isAdmin, userName, password);
         res.status(200).send(createUsers);
     } catch (error) {
         
@@ -203,7 +206,7 @@ const createContact = (req, res,next) => {
        
         res.status(200).send(contact.createContact(firstName, lastName))
     } catch (error) {
-     
+     console.log(error);
         next(error)
     }
 
@@ -276,6 +279,7 @@ const getAllContactDetails=(req,res)=>{
     }
 }
 contactDetailRouter.get('/',getAllContactDetails)  // // /api/v1/contact-app/:userid/contact/:contactId/contactDetail/
+
 application.use(errorHandler)
 application.listen(5000, () => {
     console.log("Server running on port 5000");

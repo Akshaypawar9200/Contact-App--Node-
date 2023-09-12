@@ -1,4 +1,5 @@
 const Contact = require("./Contact");
+const bcrypt = require('bcrypt');
 const JwtAuthentication=require('./middleware/JwtAuthentication')
 const {
     NotFound,
@@ -24,7 +25,7 @@ class User {
 
     }
 // create admin
-    static newAdmin(fname, lname,isAdmin,userName,password) {
+    static async newAdmin(fname, lname,isAdmin,userName,password) {
         try {
             if (typeof fname !== "string") {
                 throw new ValidationError("Invalid firstName");
@@ -32,7 +33,12 @@ class User {
             if (typeof lname !== "string") {
                 throw new ValidationError("Invalid lastName");
             }
-            let newAdmin= new User(fname, lname, isAdmin,userName,password);
+          
+
+            let hashPassword=bcrypt.hash(password,12)
+            console.log(await hashPassword);
+            let newAdmin= new User(fname, lname, isAdmin,userName,await hashPassword);
+
             User.allUser.push(newAdmin)
             return newAdmin
 
@@ -52,14 +58,17 @@ class User {
         
     }
     
-    static adminAuthentication(userName,password){
+    static async adminAuthentication(userName,password){
      
         try {
             let adminObj=User.findAdminUserName(userName)
             if(adminObj==null){
                 throw new NotFound("user not found")
             }
-            if(adminObj.password!==password)
+           
+            let checkPassword=await bcrypt.compare(password, adminObj.password)
+            
+            if(!checkPassword)
             {
                 throw new ValidationError("invalid password")
             }
@@ -71,18 +80,16 @@ class User {
         }
     }
 
-
-
-// create user
-    static createUser(fname, lname,isAdmin,userName,password) {
+// create user  
+    static async createUser(fname, lname,isAdmin,userName,password) {
         try {
-           
-           
-            let newUser = new User(fname, lname, isAdmin,userName,password);
+            let hashPassword=bcrypt.hash(password,12)
+            console.log(await hashPassword);
+            let newUser = new User(fname, lname, isAdmin,userName,await hashPassword);
             User.allUser.push(newUser);
             return newUser;
         } catch (error) {
-            console.log(error);
+            throw error
         }
     }
 // find user
